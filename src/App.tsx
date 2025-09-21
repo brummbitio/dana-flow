@@ -22,20 +22,21 @@ import PinjamanPage from "./pages/dashboard/PinjamanPage";
 import ProjekSayaPage from "./pages/dashboard/ProjekSayaPage";
 import PengaturanPage from "./pages/dashboard/PengaturanPage";
 import AdminLayout from "./components/layout/AdminLayout";
-// === PERUBAHAN DIMULAI DI SINI ===
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import ManajemenPenggunaPage from "./pages/admin/ManajemenPenggunaPage";
 import ManajemenProyekPage from "./pages/admin/ManajemenProyekPage";
 import ManajemenTransaksiPage from "./pages/admin/ManajemenTransaksiPage";
 import AdminPengaturanPage from "./pages/admin/AdminPengaturanPage";
+import DetailPenggunaPage from "./pages/admin/DetailPenggunaPage";
+// === PERUBAHAN DIMULAI DI SINI ===
+import TambahEditProyekPage from "./pages/admin/TambahEditProyekPage";
 // === PERUBAHAN SELESAI DI SINI ===
-
 
 const queryClient = new QueryClient();
 
 const MainLayout = () => {
   const location = useLocation();
-  // Sembunyikan Nav/Footer untuk semua rute di bawah /dashboard dan /admin
-  const hideNavFooter = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin') || ['/masuk', '/daftar'].includes(location.pathname);
+  const hideNavFooter = ['/masuk', '/daftar'].includes(location.pathname);
 
   return (
     <>
@@ -54,7 +55,6 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Rute dengan layout utama (Navbar & Footer) */}
             <Route element={<MainLayout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/projek" element={<ProjectsPage />} />
@@ -64,11 +64,9 @@ const App = () => (
               <Route path="/tentang-kami" element={<AboutPage />} />
             </Route>
 
-            {/* Rute tanpa layout utama */}
             <Route path="/masuk" element={<LoginPage />} />
             <Route path="/daftar" element={<RegisterPage />} />
             
-            {/* Rute khusus untuk Dashboard Pengguna */}
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<DashboardOverviewPage />} />
               <Route path="simpanan" element={<SimpananPage />} />
@@ -77,12 +75,16 @@ const App = () => (
               <Route path="pengaturan" element={<PengaturanPage />} />
             </Route>
 
-            {/* Rute khusus untuk Dashboard Admin */}
             <Route path="/admin" element={<AdminLayout />}>
-               <Route path="users" element={<ManajemenPenggunaPage />} />
-               <Route path="projects" element={<ManajemenProyekPage />} />
-               <Route path="transactions" element={<ManajemenTransaksiPage />} />
-               <Route path="settings" element={<AdminPengaturanPage />} />
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="users" element={<ManajemenPenggunaPage />} />
+              <Route path="users/:userId" element={<DetailPenggunaPage />} /> 
+              <Route path="projects" element={<ManajemenProyekPage />} />
+              {/* Rute baru untuk formulir proyek */}
+              <Route path="projects/new" element={<TambahEditProyekPage />} />
+              <Route path="projects/edit/:projectId" element={<TambahEditProyekPage />} />
+              <Route path="transactions" element={<ManajemenTransaksiPage />} />
+              <Route path="settings" element={<AdminPengaturanPage />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
