@@ -11,9 +11,10 @@ import NewsPage from "@/pages/NewsPage";
 import AboutPage from "@/pages/AboutPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
-import ProjectDetailPage from "@/pages/ProjectDetailPage"; // Import halaman detail proyek
-import ArticleDetailPage from "@/pages/ArticleDetailPage"; // Import halaman detail artikel
+import ProjectDetailPage from "@/pages/ProjectDetailPage";
+import ArticleDetailPage from "@/pages/ArticleDetailPage";
 import NotFound from "@/pages/NotFound";
+import { AuthProvider } from "./contexts/AuthContext"; // Import AuthProvider
 
 const queryClient = new QueryClient();
 
@@ -36,22 +37,25 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/projek" element={<ProjectsPage />} />
-            <Route path="/projek/:projectId" element={<ProjectDetailPage />} /> {/* Rute Dinamis Proyek */}
-            <Route path="/berita" element={<NewsPage />} />
-            <Route path="/berita/:articleId" element={<ArticleDetailPage />} /> {/* Rute Dinamis Artikel */}
-            <Route path="/tentang-kami" element={<AboutPage />} />
-            <Route path="/masuk" element={<LoginPage />} />
-            <Route path="/daftar" element={<RegisterPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <AuthProvider> {/* Bungkus aplikasi dengan AuthProvider */}
+          <Layout>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/projek" element={<ProjectsPage />} />
+              <Route path="/projek/:projectId" element={<ProjectDetailPage />} />
+              <Route path="/berita" element={<NewsPage />} />
+              <Route path="/berita/:articleId" element={<ArticleDetailPage />} />
+              <Route path="/tentang-kami" element={<AboutPage />} />
+              <Route path="/masuk" element={<LoginPage />} />
+              <Route path="/daftar" element={<RegisterPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
 
 export default App;
+
