@@ -5,6 +5,10 @@ interface User {
   id: number;
   fullName: string;
   email: string;
+  // --- PERUBAHAN DIMULAI DI SINI ---
+  status: 'unverified' | 'pending' | 'verified' | 'rejected';
+  role: 'user' | 'admin';
+  // --- PERUBAHAN SELESAI DI SINI ---
 }
 
 // Tipe data untuk konteks
@@ -36,16 +40,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     if (storedToken && storedUser) {
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      // Menambahkan nilai default jika status/role tidak ada di localStorage
+      setUser({
+        ...parsedUser,
+        status: parsedUser.status || 'unverified',
+        role: parsedUser.role || 'user',
+      });
     }
     setIsLoading(false);
   }, []);
 
   const login = (newToken: string, userData: User) => {
     localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(userData));
+    // Memastikan data pengguna baru memiliki status dan peran
+    const userToStore = {
+      ...userData,
+      status: userData.status || 'unverified',
+      role: userData.role || 'user',
+    };
+    localStorage.setItem('user', JSON.stringify(userToStore));
     setToken(newToken);
-    setUser(userData);
+    setUser(userToStore);
   };
 
   const logout = () => {
