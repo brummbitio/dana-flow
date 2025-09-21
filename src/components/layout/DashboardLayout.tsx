@@ -1,100 +1,42 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Sidebar, SidebarBody, SidebarFooter, SidebarHeader, SidebarMain, SidebarNav, SidebarNavLink, SidebarNavMain } from '@/components/ui/sidebar-new';
-import { useAuth } from '@/contexts/AuthContext';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { LayoutDashboard, Wallet, HandCoins, Briefcase, Settings, LogOut } from 'lucide-react';
+import { Outlet } from 'react-router-dom';
+import { useState } from 'react';
+import { SidebarMain } from '@/components/ui/sidebar-new';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
+import SidebarContent from './SidebarContent';
 
 const DashboardLayout = () => {
-  const { user, logout } = useAuth();
-  const location = useLocation();
-
-  const getInitials = (name: string) => {
-    if (!name) return '';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
-
-  const isActive = (path: string) => {
-    // Make overview active for the base dashboard path as well
-    if (path === '/dashboard') {
-        return location.pathname === '/dashboard';
-    }
-    return location.pathname.startsWith(path);
-  };
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar>
-        <SidebarHeader>
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-hover rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">K</span>
-            </div>
-            <span className="font-bold text-xl text-foreground">KoperasiKu</span>
-          </Link>
-        </SidebarHeader>
-
-        <SidebarBody>
-          <SidebarNav>
-            <SidebarNavMain>
-              <Link to="/dashboard" className="w-full">
-                <SidebarNavLink active={isActive('/dashboard')}>
-                  <LayoutDashboard className="w-4 h-4" />
-                  Overview
-                </SidebarNavLink>
-              </Link>
-              <Link to="/dashboard/simpanan" className="w-full">
-                <SidebarNavLink active={isActive('/dashboard/simpanan')}>
-                  <Wallet className="w-4 h-4" />
-                  Simpanan
-                </SidebarNavLink>
-              </Link>
-              <Link to="/dashboard/pinjaman" className="w-full">
-                <SidebarNavLink active={isActive('/dashboard/pinjaman')}>
-                  <HandCoins className="w-4 h-4" />
-                  Pinjaman
-                </SidebarNavLink>
-              </Link>
-              <Link to="/dashboard/projek" className="w-full">
-                <SidebarNavLink active={isActive('/dashboard/projek')}>
-                  <Briefcase className="w-4 h-4" />
-                  Projek Saya
-                </SidebarNavLink>
-              </Link>
-            </SidebarNavMain>
-          </SidebarNav>
-        </SidebarBody>
-
-        <SidebarFooter>
-          <SidebarNav>
-            <SidebarNavMain>
-              <Link to="/dashboard/pengaturan" className="w-full">
-                <SidebarNavLink active={isActive('/dashboard/pengaturan')}>
-                  <Settings className="w-4 h-4" />
-                  Pengaturan
-                </SidebarNavLink>
-              </Link>
-            </SidebarNavMain>
-          </SidebarNav>
-
-          <div className="mt-4 border-t pt-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={`https://api.dicebear.com/8.x/initials/svg?seed=${user?.fullName}`} alt={user?.fullName || ''} />
-                <AvatarFallback>{getInitials(user?.fullName || '')}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-medium truncate">{user?.fullName}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-              </div>
-              <button onClick={logout} className="text-muted-foreground hover:text-foreground">
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </SidebarFooter>
-      </Sidebar>
+      {/* Sidebar Statis untuk Desktop */}
+      <aside className="fixed left-0 top-0 z-20 h-screen w-72 flex-col border-r bg-background hidden sm:flex">
+        <SidebarContent />
+      </aside>
 
       <SidebarMain>
+        {/* Header untuk Mobile dengan Tombol Burger */}
+        <header className="sm:hidden flex items-center justify-between h-16 px-4 border-b bg-background sticky top-0 z-10">
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Buka Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-72">
+               {/* Menggunakan SidebarContent di dalam Sheet untuk mobile */}
+              <div className="flex h-full flex-col">
+                <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
+              </div>
+            </SheetContent>
+          </Sheet>
+           {/* Anda bisa menambahkan logo atau nama perusahaan di sini jika perlu untuk mobile header */}
+        </header>
+
+        {/* Konten Utama Halaman */}
         <div className="flex-1 p-6 lg:p-10">
           <Outlet />
         </div>
@@ -104,3 +46,4 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
+

@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import { Link, LinkProps } from 'react-router-dom';
 
 export interface SidebarProps extends React.ComponentProps<'aside'> {}
 
@@ -10,7 +9,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
       <aside
         ref={ref}
         className={cn(
-          'fixed left-0 top-0 z-20 h-screen w-72 flex-col border-r bg-background hidden sm:flex',
+          'flex h-full w-full flex-col border-r bg-background',
           className
         )}
         {...props}
@@ -147,7 +146,7 @@ const SidebarMain = React.forwardRef<
 SidebarMain.displayName = 'SidebarMain'
 
 export {
-    Sidebar, // <<< PERBAIKAN DI SINI
+    Sidebar,
     SidebarHeader,
     SidebarBody,
     SidebarNav,
