@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Menu, X, User as UserIcon, LogOut } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard } from 'lucide-react'; // Import LayoutDashboard
 import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
@@ -36,6 +36,7 @@ const Navbar = () => {
   ];
 
   const getInitials = (name: string) => {
+    if (!name) return '';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
@@ -106,6 +107,14 @@ const Navbar = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {/* === PERUBAHAN DIMULAI DI SINI === */}
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/dashboard">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Dashboard Saya</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {/* === PERUBAHAN SELESAI DI SINI === */}
                   <DropdownMenuItem onClick={logout} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Keluar</span>
@@ -167,6 +176,14 @@ const Navbar = () => {
                         <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
+                    {/* === PERUBAHAN DIMULAI DI SINI (MOBILE) === */}
+                    <Button variant="outline" asChild className="w-full font-medium justify-start">
+                      <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Dashboard Saya
+                      </Link>
+                    </Button>
+                    {/* === PERUBAHAN SELESAI DI SINI (MOBILE) === */}
                     <Button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="w-full font-medium">
                       <LogOut className="mr-2 h-4 w-4" />
                       Keluar
