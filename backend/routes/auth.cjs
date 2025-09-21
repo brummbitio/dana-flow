@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../db.cjs'); // Perbarui path ini
+const db = require('../db.cjs');
 
 const router = express.Router();
 
@@ -24,7 +24,7 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Simpan user baru
+    // Simpan user baru (role akan default 'user' sesuai skema DB)
     await db.query('INSERT INTO users (fullName, email, phone, password) VALUES (?, ?, ?, ?)', [
       fullName,
       email,
@@ -48,7 +48,7 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    // Cek user berdasarkan email
+    // Cek user berdasarkan email, dan ambil role-nya
     const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (users.length === 0) {
       return res.status(401).json({ message: 'Email atau password salah.' });
@@ -62,14 +62,15 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Email atau password salah.' });
     }
 
-    // Buat JWT
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET || 'secretkey', {
+    // Buat JWT dengan menyertakan role
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET || 'secretkey', {
       expiresIn: '1d',
     });
     
     // Hapus password dari objek user sebelum dikirim ke client
     delete user.password;
 
+    // Kirim token dan data user (termasuk role) ke client
     res.json({ token, user });
   } catch (error) {
     console.error('Error saat login:', error);
@@ -78,3 +79,4 @@ router.post('/login', async (req, res) => {
 });
 
 module.exports = router;
+
