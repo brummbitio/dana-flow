@@ -2,18 +2,28 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User as UserIcon, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, user, logout, isLoading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -24,6 +34,14 @@ const Navbar = () => {
     { name: 'Berita', path: '/berita' },
     { name: 'Tentang Kami', path: '/tentang-kami' },
   ];
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  }
+
+  if (isLoading) {
+    return null; // Atau tampilkan skeleton loader
+  }
 
   return (
     <motion.nav
@@ -38,7 +56,6 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-primary to-primary-hover rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-lg lg:text-xl">K</span>
@@ -46,7 +63,6 @@ const Navbar = () => {
             <span className="font-bold text-xl lg:text-2xl text-foreground">KoperasiKu</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
             {navLinks.map((link) => (
               <Link
@@ -71,17 +87,43 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Desktop Auth Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
-            <Button variant="ghost" asChild className="font-medium">
-              <Link to="/masuk">Masuk</Link>
-            </Button>
-            <Button asChild className="font-medium">
-              <Link to="/daftar">Daftar</Link>
-            </Button>
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar>
+                      <AvatarImage src={`https://api.dicebear.com/8.x/initials/svg?seed=${user.fullName}`} alt={user.fullName} />
+                      <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.fullName}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Keluar</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" asChild className="font-medium">
+                  <Link to="/masuk">Masuk</Link>
+                </Button>
+                <Button asChild className="font-medium">
+                  <Link to="/daftar">Daftar</Link>
+                </Button>
+              </>
+            )}
           </div>
 
-          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="lg:hidden p-2 text-foreground"
@@ -90,7 +132,6 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
@@ -113,13 +154,34 @@ const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
-              <div className="pt-4 space-y-2">
-                <Button variant="ghost" asChild className="w-full font-medium">
-                  <Link to="/masuk">Masuk</Link>
-                </Button>
-                <Button asChild className="w-full font-medium">
-                  <Link to="/daftar">Daftar</Link>
-                </Button>
+              <div className="pt-4 space-y-2 border-t mt-4">
+                 {isAuthenticated && user ? (
+                   <>
+                    <div className="flex items-center space-x-3 mb-4">
+                       <Avatar>
+                        <AvatarImage src={`https://api.dicebear.com/8.x/initials/svg?seed=${user.fullName}`} alt={user.fullName} />
+                        <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium leading-none">{user.fullName}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <Button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="w-full font-medium">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Keluar
+                    </Button>
+                   </>
+                 ) : (
+                  <>
+                    <Button variant="ghost" asChild className="w-full font-medium">
+                      <Link to="/masuk" onClick={() => setIsMobileMenuOpen(false)}>Masuk</Link>
+                    </Button>
+                    <Button asChild className="w-full font-medium">
+                      <Link to="/daftar" onClick={() => setIsMobileMenuOpen(false)}>Daftar</Link>
+                    </Button>
+                  </>
+                 )}
               </div>
             </div>
           </motion.div>
