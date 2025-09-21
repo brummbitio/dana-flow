@@ -11,7 +11,8 @@ import NewsPage from "@/pages/NewsPage";
 import AboutPage from "@/pages/AboutPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
-import ProjectDetailPage from "@/pages/ProjectDetailPage"; // Import halaman baru
+import ProjectDetailPage from "@/pages/ProjectDetailPage"; // Import halaman detail proyek
+import ArticleDetailPage from "@/pages/ArticleDetailPage"; // Import halaman detail artikel
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,12 +40,12 @@ const App = () => (
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/projek" element={<ProjectsPage />} />
-            <Route path="/projek/:projectId" element={<ProjectDetailPage />} /> {/* Tambahkan rute baru */}
+            <Route path="/projek/:projectId" element={<ProjectDetailPage />} /> {/* Rute Dinamis Proyek */}
             <Route path="/berita" element={<NewsPage />} />
+            <Route path="/berita/:articleId" element={<ArticleDetailPage />} /> {/* Rute Dinamis Artikel */}
             <Route path="/tentang-kami" element={<AboutPage />} />
             <Route path="/masuk" element={<LoginPage />} />
             <Route path="/daftar" element={<RegisterPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

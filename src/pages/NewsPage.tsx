@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import AnimateOnScroll from '@/components/animations/AnimateOnScroll';
-import StaggerContainer, { StaggerChild } from '@/components/animations/StaggerContainer';
-import ArticleCard from '@/components/ArticleCard';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import AnimateOnScroll from '../components/animations/AnimateOnScroll';
+import StaggerContainer, { StaggerChild } from '../components/animations/StaggerContainer';
+import ArticleCard from '../components/ArticleCard';
+import { articlesData } from '../data/articles'; // Import data terpusat
 import { Search, TrendingUp, Clock, BookOpen } from 'lucide-react';
 
 const NewsPage = () => {
@@ -21,90 +22,8 @@ const NewsPage = () => {
     { id: 'berita', label: 'Berita Terkini' }
   ];
 
-  // Extended mock data for articles
-  const allArticles = [
-    {
-      title: "Tips Memulai Investasi di Koperasi Digital untuk Pemula",
-      excerpt: "Panduan lengkap untuk memahami investasi koperasi digital, mulai dari dasar-dasar hingga strategi yang tepat untuk pemula yang ingin memulai journey investasi.",
-      author: "Dr. Siti Nurhaliza",
-      publishDate: "15 Mar 2024",
-      category: "Edukasi",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "5 min baca"
-    },
-    {
-      title: "Kisah Sukses UMKM yang Berkembang Berkat Urunan Dana",
-      excerpt: "Mengenal lebih dekat perjalanan UMKM lokal yang berhasil berkembang pesat melalui platform urunan dana komunitas dan mencapai omzet jutaan rupiah.",
-      author: "Ahmad Rizki",
-      publishDate: "12 Mar 2024",
-      category: "Cerita Sukses",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "7 min baca"
-    },
-    {
-      title: "Regulasi Terbaru OJK untuk Platform Koperasi Digital",
-      excerpt: "Update terkini mengenai regulasi dan kebijakan OJK yang perlu diketahui oleh pengguna platform koperasi digital untuk memastikan keamanan investasi.",
-      author: "Lisa Wulandari, S.H.",
-      publishDate: "10 Mar 2024",
-      category: "Regulasi",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "4 min baca"
-    },
-    {
-      title: "Strategi Diversifikasi Portfolio dalam Investasi Koperasi",
-      excerpt: "Pelajari cara mendiversifikasi portfolio investasi Anda di platform koperasi untuk memaksimalkan return sambil meminimalkan risiko.",
-      author: "Budi Hartono, CFA",
-      publishDate: "8 Mar 2024",
-      category: "Tips",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "6 min baca"
-    },
-    {
-      title: "Pertumbuhan Ekonomi Digital di Indonesia 2024",
-      excerpt: "Analisis mendalam tentang pertumbuhan sektor ekonomi digital Indonesia dan peluang investasi di sektor UMKM digital.",
-      author: "Prof. Maya Indira",
-      publishDate: "5 Mar 2024",
-      category: "Berita",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "8 min baca"
-    },
-    {
-      title: "Cara Memilih Projek Investasi yang Tepat",
-      excerpt: "Panduan praktis untuk mengevaluasi dan memilih projek investasi yang sesuai dengan profil risiko dan tujuan keuangan Anda.",
-      author: "Andi Setiawan",
-      publishDate: "3 Mar 2024",
-      category: "Tips",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "5 min baca"
-    },
-    {
-      title: "Transformasi Digital UMKM: Dari Offline ke Online",
-      excerpt: "Studi kasus transformasi digital berbagai UMKM yang berhasil meningkatkan penjualan hingga 300% melalui digitalisasi proses bisnis.",
-      author: "Rina Sari",
-      publishDate: "1 Mar 2024",
-      category: "Cerita Sukses",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "9 min baca"
-    },
-    {
-      title: "Memahami Risiko dan Mitigasi dalam Investasi Koperasi",
-      excerpt: "Pelajari berbagai jenis risiko dalam investasi koperasi dan strategi mitigasi yang dapat Anda terapkan untuk melindungi investasi.",
-      author: "Dr. Bambang Sutrisno",
-      publishDate: "28 Feb 2024",
-      category: "Edukasi",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "7 min baca"
-    },
-    {
-      title: "Dampak Positif Koperasi Digital terhadap Ekonomi Lokal",
-      excerpt: "Penelitian terbaru menunjukkan bagaimana platform koperasi digital berkontribusi terhadap pertumbuhan ekonomi lokal dan pemberdayaan masyarakat.",
-      author: "Tim Riset KoperasiKu",
-      publishDate: "25 Feb 2024",
-      category: "Berita",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "6 min baca"
-    }
-  ];
+  // Gunakan data dari articles.ts
+  const allArticles = articlesData;
 
   const filteredArticles = allArticles.filter(article => {
     const matchesCategory = selectedCategory === 'semua' || 
@@ -232,8 +151,8 @@ const NewsPage = () => {
           </div>
 
           <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredArticles.map((article, index) => (
-              <StaggerChild key={index}>
+            {filteredArticles.map((article) => (
+              <StaggerChild key={article.id}>
                 <ArticleCard {...article} />
               </StaggerChild>
             ))}

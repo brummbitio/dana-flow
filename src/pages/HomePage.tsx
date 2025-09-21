@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import AnimateOnScroll from '@/components/animations/AnimateOnScroll';
-import StaggerContainer, { StaggerChild } from '@/components/animations/StaggerContainer';
-import ProjectCard from '@/components/ProjectCard';
-import ArticleCard from '@/components/ArticleCard';
-import { projectsData } from '@/data/projects'; // Import data baru
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import AnimateOnScroll from '../components/animations/AnimateOnScroll';
+import StaggerContainer, { StaggerChild } from '../components/animations/StaggerContainer';
+import ProjectCard from '../components/ProjectCard';
+import ArticleCard from '../components/ArticleCard';
+import { projectsData } from '../data/projects';
+import { articlesData } from '../data/articles'; // Import data artikel
 import { 
   TrendingUp, 
   Users, 
@@ -18,39 +19,8 @@ import {
 } from 'lucide-react';
 
 const HomePage = () => {
-  // Gunakan 3 proyek pertama dari data baru
   const featuredProjects = projectsData.slice(0, 3);
-
-  // Mock data for articles
-  const latestArticles = [
-    {
-      title: "Tips Memulai Investasi di Koperasi Digital untuk Pemula",
-      excerpt: "Panduan lengkap untuk memahami investasi koperasi digital, mulai dari dasar-dasar hingga strategi yang tepat untuk pemula.",
-      author: "Dr. Siti Nurhaliza",
-      publishDate: "15 Mar 2024",
-      category: "Edukasi",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "5 min baca"
-    },
-    {
-      title: "Kisah Sukses UMKM yang Berkembang Berkat Urunan Dana",
-      excerpt: "Mengenal lebih dekat perjalanan UMKM lokal yang berhasil berkembang pesat melalui platform urunan dana komunitas.",
-      author: "Ahmad Rizki",
-      publishDate: "12 Mar 2024",
-      category: "Cerita Sukses",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "7 min baca"
-    },
-    {
-      title: "Regulasi Terbaru OJK untuk Platform Koperasi Digital",
-      excerpt: "Update terkini mengenai regulasi dan kebijakan OJK yang perlu diketahui oleh pengguna platform koperasi digital.",
-      author: "Lisa Wulandari, S.H.",
-      publishDate: "10 Mar 2024",
-      category: "Regulasi",
-      imageUrl: "/api/placeholder/400/300",
-      readTime: "4 min baca"
-    }
-  ];
+  const latestArticles = articlesData.slice(0, 3); // Gunakan data artikel terpusat
 
   const stats = [
     { label: "Total Pendanaan", value: "Rp 2.5B", icon: TrendingUp },
@@ -184,8 +154,8 @@ const HomePage = () => {
             </div>
             
             <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredProjects.map((project, index) => (
-                <StaggerChild key={index}>
+              {featuredProjects.map((project) => (
+                <StaggerChild key={project.id}>
                   <ProjectCard {...project} />
                 </StaggerChild>
               ))}
@@ -280,8 +250,8 @@ const HomePage = () => {
             </div>
             
             <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {latestArticles.map((article, index) => (
-                <StaggerChild key={index}>
+              {latestArticles.map((article) => (
+                <StaggerChild key={article.id}>
                   <ArticleCard {...article} />
                 </StaggerChild>
               ))}
@@ -387,3 +357,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
