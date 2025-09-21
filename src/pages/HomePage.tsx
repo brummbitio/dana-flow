@@ -5,6 +5,7 @@ import AnimateOnScroll from '@/components/animations/AnimateOnScroll';
 import StaggerContainer, { StaggerChild } from '@/components/animations/StaggerContainer';
 import ProjectCard from '@/components/ProjectCard';
 import ArticleCard from '@/components/ArticleCard';
+import { projectsData } from '@/data/projects'; // Import data baru
 import { 
   TrendingUp, 
   Users, 
@@ -17,42 +18,8 @@ import {
 } from 'lucide-react';
 
 const HomePage = () => {
-  // Mock data for projects
-  const featuredProjects = [
-    {
-      title: "Warung Makan Bu Sari - Ekspansi Kuliner Tradisional",
-      description: "Membantu Bu Sari mengembangkan warung makan tradisional dengan peralatan modern dan tempat yang lebih luas untuk melayani lebih banyak pelanggan.",
-      targetAmount: 50000000,
-      currentAmount: 35000000,
-      backers: 128,
-      deadline: "30 hari lagi",
-      location: "Yogyakarta",
-      category: "Kuliner",
-      imageUrl: "/api/placeholder/400/300"
-    },
-    {
-      title: "Koperasi Tani Organik Nusantara",
-      description: "Mengembangkan sistem distribusi hasil panen organik langsung dari petani ke konsumen dengan teknologi modern dan packaging ramah lingkungan.",
-      targetAmount: 75000000,
-      currentAmount: 45000000,
-      backers: 89,
-      deadline: "45 hari lagi",
-      location: "Malang, Jawa Timur",
-      category: "Pertanian",
-      imageUrl: "/api/placeholder/400/300"
-    },
-    {
-      title: "Rajutan Ibu-Ibu Desa Cirebon",
-      description: "Memberdayakan ibu-ibu desa untuk mengembangkan usaha rajutan dengan pemasaran online dan pelatihan desain produk modern.",
-      targetAmount: 25000000,
-      currentAmount: 18000000,
-      backers: 156,
-      deadline: "20 hari lagi",
-      location: "Cirebon, Jawa Barat",
-      category: "Kerajinan",
-      imageUrl: "/api/placeholder/400/300"
-    }
-  ];
+  // Gunakan 3 proyek pertama dari data baru
+  const featuredProjects = projectsData.slice(0, 3);
 
   // Mock data for articles
   const latestArticles = [
