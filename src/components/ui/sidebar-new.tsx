@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 export interface SidebarProps extends React.ComponentProps<'aside'> {}
@@ -9,7 +10,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
       <aside
         ref={ref}
         className={cn(
-          'flex h-full w-full flex-col border-r bg-background',
+          'flex h-full flex-col',
           className
         )}
         {...props}
@@ -26,7 +27,7 @@ const SidebarHeader = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn('flex h-16 items-center border-b px-6 shrink-0', className)}
+      className={cn('flex h-16 items-center border-b px-6', className)}
       {...props}
     />
   )
@@ -63,7 +64,7 @@ const SidebarNavMain = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn('flex flex-col gap-y-1', className)}
+      className={cn('flex flex-col', className)}
       {...props}
     />
   )
@@ -96,17 +97,19 @@ const SidebarNavHeaderTitle = React.forwardRef<
 SidebarNavHeaderTitle.displayName = 'SidebarNavHeaderTitle'
 
 export interface SidebarNavLinkProps
-  extends React.ComponentProps<'div'> {
+  extends React.ComponentProps<typeof Link> {
+  to: string
   active?: boolean
 }
 
-const SidebarNavLink = React.forwardRef<HTMLDivElement, SidebarNavLinkProps>(
-  ({ className, active, ...props }, ref) => {
+const SidebarNavLink = React.forwardRef<HTMLAnchorElement, SidebarNavLinkProps>(
+  ({ className, active, to, ...props }, ref) => {
     return (
-      <div
+      <Link
         ref={ref}
+        to={to}
         className={cn(
-          'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer',
+          'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
           active && 'bg-muted text-foreground',
           className
         )}
@@ -138,7 +141,7 @@ const SidebarMain = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn('sm:ml-72 w-full', className)}
+      className={cn('sm:pl-72', className)}
       {...props}
     />
   )

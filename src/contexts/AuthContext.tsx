@@ -5,10 +5,8 @@ interface User {
   id: number;
   fullName: string;
   email: string;
-  // --- PERUBAHAN DIMULAI DI SINI ---
-  status: 'unverified' | 'pending' | 'verified' | 'rejected';
-  role: 'user' | 'admin';
-  // --- PERUBAHAN SELESAI DI SINI ---
+  role: 'user' | 'admin'; // Menambahkan peran
+  status?: 'unverified' | 'pending' | 'verified'; // Menambahkan status verifikasi (opsional)
 }
 
 // Tipe data untuk konteks
@@ -39,29 +37,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const storedUser = localStorage.getItem('user');
     
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      const parsedUser = JSON.parse(storedUser);
-      // Menambahkan nilai default jika status/role tidak ada di localStorage
-      setUser({
-        ...parsedUser,
-        status: parsedUser.status || 'unverified',
-        role: parsedUser.role || 'user',
-      });
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error("Gagal mem-parse data pengguna dari local storage", error);
+        localStorage.clear();
+      }
     }
     setIsLoading(false);
   }, []);
 
   const login = (newToken: string, userData: User) => {
     localStorage.setItem('token', newToken);
-    // Memastikan data pengguna baru memiliki status dan peran
-    const userToStore = {
-      ...userData,
-      status: userData.status || 'unverified',
-      role: userData.role || 'user',
-    };
-    localStorage.setItem('user', JSON.stringify(userToStore));
+    localStorage.setItem('user', JSON.stringify(userData));
     setToken(newToken);
-    setUser(userToStore);
+    setUser(userData);
   };
 
   const logout = () => {
@@ -88,3 +80,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -23,7 +23,6 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Menggunakan environment variable untuk base URL API
       const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/api/auth/login`;
       
       const response = await fetch(apiUrl, {
@@ -40,7 +39,13 @@ const LoginPage = () => {
       
       login(data.token, data.user);
       toast.success('Login berhasil!');
-      navigate('/');
+
+      // Arahkan berdasarkan role pengguna
+      if (data.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
 
     } catch (error: any) {
       toast.error(error.message || 'Terjadi kesalahan.');
@@ -185,3 +190,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+
