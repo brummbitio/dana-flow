@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import AnimateOnScroll from '@/components/animations/AnimateOnScroll';
 import StaggerContainer, { StaggerChild } from '@/components/animations/StaggerContainer';
 import ProjectCard from '@/components/ProjectCard';
+import { projectsData } from '@/data/projects'; // Import data baru
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
 
 const ProjectsPage = () => {
@@ -22,75 +23,8 @@ const ProjectsPage = () => {
     { id: 'kesehatan', label: 'Kesehatan' }
   ];
 
-  // Extended mock data for projects
-  const allProjects = [
-    {
-      title: "Warung Makan Bu Sari - Ekspansi Kuliner Tradisional",
-      description: "Membantu Bu Sari mengembangkan warung makan tradisional dengan peralatan modern dan tempat yang lebih luas untuk melayani lebih banyak pelanggan.",
-      targetAmount: 50000000,
-      currentAmount: 35000000,
-      backers: 128,
-      deadline: "30 hari lagi",
-      location: "Yogyakarta",
-      category: "Kuliner",
-      imageUrl: "/api/placeholder/400/300"
-    },
-    {
-      title: "Koperasi Tani Organik Nusantara",
-      description: "Mengembangkan sistem distribusi hasil panen organik langsung dari petani ke konsumen dengan teknologi modern dan packaging ramah lingkungan.",
-      targetAmount: 75000000,
-      currentAmount: 45000000,
-      backers: 89,
-      deadline: "45 hari lagi",
-      location: "Malang, Jawa Timur",
-      category: "Pertanian",
-      imageUrl: "/api/placeholder/400/300"
-    },
-    {
-      title: "Rajutan Ibu-Ibu Desa Cirebon",
-      description: "Memberdayakan ibu-ibu desa untuk mengembangkan usaha rajutan dengan pemasaran online dan pelatihan desain produk modern.",
-      targetAmount: 25000000,
-      currentAmount: 18000000,
-      backers: 156,
-      deadline: "20 hari lagi",
-      location: "Cirebon, Jawa Barat",
-      category: "Kerajinan",
-      imageUrl: "/api/placeholder/400/300"
-    },
-    {
-      title: "Startup EdTech untuk Anak Desa",
-      description: "Platform pembelajaran digital khusus untuk anak-anak di daerah pedesaan dengan konten yang disesuaikan dengan kebutuhan lokal.",
-      targetAmount: 100000000,
-      currentAmount: 65000000,
-      backers: 234,
-      deadline: "60 hari lagi",
-      location: "Bandung, Jawa Barat",
-      category: "Teknologi",
-      imageUrl: "/api/placeholder/400/300"
-    },
-    {
-      title: "Sekolah Gratis untuk Anak Kurang Mampu",
-      description: "Mendirikan sekolah gratis dengan fasilitas lengkap untuk anak-anak dari keluarga kurang mampu di daerah terpencil.",
-      targetAmount: 200000000,
-      currentAmount: 120000000,
-      backers: 445,
-      deadline: "90 hari lagi",
-      location: "Lombok, NTB",
-      category: "Pendidikan",
-      imageUrl: "/api/placeholder/400/300"
-    },
-    {
-      title: "Klinik Kesehatan Desa Terpadu",
-      description: "Membangun klinik kesehatan dengan fasilitas modern untuk melayani masyarakat desa yang selama ini sulit mengakses layanan kesehatan.",
-      targetAmount: 150000000,
-      currentAmount: 85000000,
-      backers: 312,
-      deadline: "75 hari lagi",
-      location: "Sumba, NTT",
-      category: "Kesehatan",
-      imageUrl: "/api/placeholder/400/300"
-    }
-  ];
+  // Gunakan data dari projects.ts
+  const allProjects = projectsData;
 
   const filteredProjects = allProjects.filter(project => {
     const matchesCategory = selectedCategory === 'semua' || 
