@@ -1,10 +1,17 @@
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { SidebarBody, SidebarFooter, SidebarHeader, SidebarNav, SidebarNavLink, SidebarNavMain } from '@/components/ui/sidebar-new';
+import {
+  SidebarHeader,
+  SidebarBody,
+  SidebarFooter,
+  SidebarNav,
+  SidebarNavMain,
+  SidebarNavLink,
+} from '@/components/ui/sidebar-new';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { LayoutDashboard, Wallet, HandCoins, Briefcase, Settings, LogOut } from 'lucide-react';
 
-// Menambahkan interface untuk props
 interface SidebarContentProps {
   onLinkClick?: () => void;
 }
@@ -13,30 +20,21 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ onLinkClick }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
+  const isVerified = user?.status === 'verified';
+
   const getInitials = (name: string) => {
     if (!name) return '';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
   const isActive = (path: string) => {
-     // Make overview active only on the exact path
-    if (path === '/dashboard') {
-      return location.pathname === path;
-    }
-    return location.pathname.startsWith(path);
+    return location.pathname === path || (path === '/dashboard' && location.pathname.startsWith('/dashboard/'));
   };
-
-  const handleLogout = () => {
-    logout();
-    if (onLinkClick) {
-      onLinkClick();
-    }
-  }
 
   return (
     <>
       <SidebarHeader>
-        <Link to="/" className="flex items-center space-x-2" onClick={onLinkClick}>
+        <Link to="/" className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-hover rounded-lg flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">K</span>
           </div>
@@ -47,19 +45,19 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ onLinkClick }) => {
       <SidebarBody>
         <SidebarNav>
           <SidebarNavMain>
-            <SidebarNavLink to="/dashboard" active={isActive('/dashboard')} onClick={onLinkClick}>
+            <SidebarNavLink to="/dashboard" active={isActive('/dashboard')} onClick={onLinkClick} disabled={!isVerified}>
               <LayoutDashboard className="w-4 h-4" />
               Overview
             </SidebarNavLink>
-            <SidebarNavLink to="/dashboard/simpanan" active={isActive('/dashboard/simpanan')} onClick={onLinkClick}>
+            <SidebarNavLink to="/dashboard/simpanan" active={isActive('/dashboard/simpanan')} onClick={onLinkClick} disabled={!isVerified}>
               <Wallet className="w-4 h-4" />
               Simpanan
             </SidebarNavLink>
-            <SidebarNavLink to="/dashboard/pinjaman" active={isActive('/dashboard/pinjaman')} onClick={onLinkClick}>
+            <SidebarNavLink to="/dashboard/pinjaman" active={isActive('/dashboard/pinjaman')} onClick={onLinkClick} disabled={!isVerified}>
               <HandCoins className="w-4 h-4" />
               Pinjaman
             </SidebarNavLink>
-            <SidebarNavLink to="/dashboard/projek" active={isActive('/dashboard/projek')} onClick={onLinkClick}>
+            <SidebarNavLink to="/dashboard/projek" active={isActive('/dashboard/projek')} onClick={onLinkClick} disabled={!isVerified}>
               <Briefcase className="w-4 h-4" />
               Projek Saya
             </SidebarNavLink>
@@ -87,7 +85,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ onLinkClick }) => {
               <p className="text-sm font-medium truncate">{user?.fullName}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
-            <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
+            <button onClick={logout} className="text-muted-foreground hover:text-foreground">
               <LogOut className="w-5 h-5" />
             </button>
           </div>

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, LinkProps } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 export interface SidebarProps extends React.ComponentProps<'aside'> {}
@@ -27,7 +27,7 @@ const SidebarHeader = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn('flex h-16 items-center border-b px-6', className)}
+      className={cn('flex h-16 shrink-0 items-center border-b px-6', className)}
       {...props}
     />
   )
@@ -71,46 +71,21 @@ const SidebarNavMain = React.forwardRef<
 })
 SidebarNavMain.displayName = 'SidebarNavMain'
 
-const SidebarNavHeader = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  return <div ref={ref} className={cn('px-3 pb-2 pt-3', className)} {...props} />
-})
-SidebarNavHeader.displayName = 'SidebarNavHeader'
 
-const SidebarNavHeaderTitle = React.forwardRef<
-  HTMLHeadingElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => {
-  return (
-    <h4
-      ref={ref}
-      className={cn(
-        'text-xs font-semibold uppercase tracking-wider text-muted-foreground/80',
-        className
-      )}
-      {...props}
-    />
-  )
-})
-SidebarNavHeaderTitle.displayName = 'SidebarNavHeaderTitle'
-
-export interface SidebarNavLinkProps
-  extends React.ComponentProps<typeof Link> {
-  to: string
-  active?: boolean
+export interface SidebarNavLinkProps extends LinkProps {
+  active?: boolean;
+  disabled?: boolean;
 }
 
 const SidebarNavLink = React.forwardRef<HTMLAnchorElement, SidebarNavLinkProps>(
-  ({ className, active, to, ...props }, ref) => {
+  ({ className, active, disabled, ...props }, ref) => {
     return (
       <Link
         ref={ref}
-        to={to}
         className={cn(
           'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
           active && 'bg-muted text-foreground',
+          disabled && 'pointer-events-none opacity-50',
           className
         )}
         {...props}
@@ -134,30 +109,13 @@ const SidebarFooter = React.forwardRef<
 })
 SidebarFooter.displayName = 'SidebarFooter'
 
-const SidebarMain = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn('sm:pl-72', className)}
-      {...props}
-    />
-  )
-})
-SidebarMain.displayName = 'SidebarMain'
-
 export {
     Sidebar,
     SidebarHeader,
     SidebarBody,
     SidebarNav,
     SidebarNavMain,
-    SidebarNavHeader,
-    SidebarNavHeaderTitle,
     SidebarNavLink,
     SidebarFooter,
-    SidebarMain
 }
 
