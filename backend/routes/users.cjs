@@ -6,7 +6,6 @@ const router = express.Router();
 // GET semua pengguna (kecuali admin)
 router.get('/', async (req, res) => {
   try {
-    // REVISI: Menambahkan klausa WHERE untuk tidak menyertakan admin
     const [users] = await db.query("SELECT id, fullName, email, createdAt, status, role FROM users WHERE role != 'admin'");
     res.json(users);
   } catch (error) {
@@ -35,13 +34,23 @@ router.put('/:id/status', async (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
 
+  // Memastikan status yang dikirim valid
   if (!['unverified', 'pending', 'verified', 'rejected'].includes(status)) {
     return res.status(400).json({ message: 'Status tidak valid.' });
   }
 
   try {
-    await db.query('UPDATE users SET status = ? WHERE id = ?', [status, id]);
-    res.json({ message: `Status pengguna berhasil diubah menjadi ${status}` });
+    const [result] = await db.query('UPDATE users SET status = ? WHERE id = ?', [status, id]);
+
+    if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Pengguna tidak ditemukan.' });
+    }
+    
+    // Mengirim respons sukses sederhana
+    res.json({ 
+        message: `Status pengguna berhasil diubah menjadi ${status}`
+    });
+
   } catch (error) {
     console.error('Error updating user status:', error);
     res.status(500).json({ message: 'Terjadi kesalahan pada server.' });

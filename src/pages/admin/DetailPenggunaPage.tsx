@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { ArrowLeft, Check, X, User, Mail, Phone, Calendar, Landmark } from 'lucide-react';
+import { ArrowLeft, Check, X, User, Mail, Phone, Calendar, Landmark, UserX } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -37,6 +37,7 @@ const DetailPenggunaPage = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${userId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -46,14 +47,15 @@ const DetailPenggunaPage = () => {
         setUser(data);
       } catch (error: any) {
         toast.error(error.message);
+        navigate('/admin/users');
       } finally {
         setIsLoading(false);
       }
     };
     if (token && userId) fetchUser();
-  }, [userId, token]);
+  }, [userId, token, navigate]);
 
-  const handleVerification = async (newStatus: 'verified' | 'rejected') => {
+  const handleStatusUpdate = async (newStatus: 'verified' | 'rejected' | 'unverified') => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${userId}/status`, {
         method: 'PUT',
@@ -63,12 +65,17 @@ const DetailPenggunaPage = () => {
         },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (!response.ok) throw new Error('Gagal memperbarui status.');
       
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Gagal memperbarui status.');
+      }
+      
       toast.success(data.message);
-      // Refresh data pengguna setelah update
-      if(user) setUser({ ...user, status: newStatus });
+      
+      // Selalu navigasi kembali ke halaman manajemen pengguna setelah aksi apapun
+      navigate('/admin/users', { replace: true });
 
     } catch (error: any) {
       toast.error(error.message);
@@ -77,6 +84,48 @@ const DetailPenggunaPage = () => {
 
   if (isLoading) return <div>Memuat data pengguna...</div>;
   if (!user) return <div>Pengguna tidak ditemukan.</div>;
+
+  const renderActionCard = () => {
+    switch (user.status) {
+        case 'verified':
+            return (
+                <Card className="sticky top-24">
+                    <CardHeader>
+                        <CardTitle>Aksi Anggota</CardTitle>
+                        <CardDescription>Nonaktifkan anggota untuk membatasi akses fitur.</CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                        <Button variant="destructive" className="w-full" onClick={() => handleStatusUpdate('unverified')}>
+                            <UserX className="mr-2 h-4 w-4" />
+                            Nonaktifkan Anggota
+                        </Button>
+                    </CardFooter>
+                </Card>
+            );
+        case 'pending':
+        case 'unverified':
+        case 'rejected':
+        default:
+            return (
+                <Card className="sticky top-24">
+                    <CardHeader>
+                        <CardTitle>Aksi Verifikasi</CardTitle>
+                        <CardDescription>Setujui atau tolak pengajuan verifikasi pengguna ini.</CardDescription>
+                    </CardHeader>
+                    <CardFooter className="flex flex-col gap-2">
+                        <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleStatusUpdate('verified')}>
+                            <Check className="mr-2 h-4 w-4" />
+                            Setujui Verifikasi
+                        </Button>
+                        <Button variant="destructive" className="w-full" onClick={() => handleStatusUpdate('rejected')}>
+                            <X className="mr-2 h-4 w-4" />
+                            Tolak Verifikasi
+                        </Button>
+                    </CardFooter>
+                </Card>
+            );
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -134,22 +183,7 @@ const DetailPenggunaPage = () => {
             </Card>
         </div>
         <div className="lg:col-span-1">
-             <Card className="sticky top-24">
-                <CardHeader>
-                    <CardTitle>Aksi Verifikasi</CardTitle>
-                    <CardDescription>Setujui atau tolak pengajuan verifikasi pengguna ini.</CardDescription>
-                </CardHeader>
-                <CardFooter className="flex flex-col gap-2">
-                    <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleVerification('verified')}>
-                        <Check className="mr-2 h-4 w-4" />
-                        Setujui Verifikasi
-                    </Button>
-                    <Button variant="destructive" className="w-full" onClick={() => handleVerification('rejected')}>
-                        <X className="mr-2 h-4 w-4" />
-                        Tolak Verifikasi
-                    </Button>
-                </CardFooter>
-            </Card>
+             {renderActionCard()}
         </div>
       </div>
     </div>
