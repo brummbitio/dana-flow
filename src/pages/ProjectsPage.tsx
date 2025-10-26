@@ -1,17 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import AnimateOnScroll from '@/components/animations/AnimateOnScroll';
 import StaggerContainer, { StaggerChild } from '@/components/animations/StaggerContainer';
 import ProjectCard from '@/components/ProjectCard';
-import { projectsData } from '@/data/projects'; // Import data baru
+import { ProjectData } from '@/types/project';
+import { useToast } from '@/hooks/use-toast';
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
 
 const ProjectsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('semua');
   const [searchQuery, setSearchQuery] = useState('');
+  const [projects, setProjects] = useState<ProjectData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const categories = [
     { id: 'semua', label: 'Semua Projek' },
@@ -23,16 +29,62 @@ const ProjectsPage = () => {
     { id: 'kesehatan', label: 'Kesehatan' }
   ];
 
-  // Gunakan data dari projects.ts
-  const allProjects = projectsData;
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/projects/public`);
+        if (!response.ok) {
+          throw new Error('Gagal mengambil data proyek');
+        }
+        const data = await response.json();
+        setProjects(data);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        toast({
+          title: 'Error',
+          description: 'Gagal memuat data proyek. Silakan coba lagi.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const filteredProjects = allProjects.filter(project => {
+    fetchProjects();
+  }, [API_BASE_URL, toast]);
+
+  const filteredProjects = projects.filter(project => {
     const matchesCategory = selectedCategory === 'semua' || 
       project.category.toLowerCase() === selectedCategory;
     const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
+
+  const renderProjectGrid = () => {
+    if (isLoading) {
+      return (
+        <>
+          {[...Array(6)].map((_, index) => (
+            <div key={index} className="space-y-4">
+              <Skeleton className="h-48 w-full rounded-xl" />
+              <div className="space-y-2 p-4">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            </div>
+          ))}
+        </>
+      );
+    }
+
+    return filteredProjects.map((project) => (
+      <StaggerChild key={project.id}>
+        <ProjectCard project={project} />
+      </StaggerChild>
+    ));
+  };
 
   return (
     <div className="min-h-screen pt-20">
@@ -114,7 +166,7 @@ const ProjectsPage = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">
-              {filteredProjects.length} Projek Ditemukan
+              {isLoading ? 'Memuat...' : `${filteredProjects.length} Projek Ditemukan`}
             </h2>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Filter size={16} />
@@ -123,35 +175,38 @@ const ProjectsPage = () => {
           </div>
 
           <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProjects.map((project, index) => (
-              <StaggerChild key={index}>
-                <ProjectCard {...project} />
-              </StaggerChild>
-            ))}
+            {renderProjectGrid()}
           </StaggerContainer>
 
-          {filteredProjects.length === 0 && (
+          {!isLoading && filteredProjects.length === 0 && (
             <div className="text-center py-16">
               <div className="glass-card p-12 rounded-xl max-w-md mx-auto">
-                <h3 className="text-xl font-semibold mb-2">Projek Tidak Ditemukan</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  {projects.length === 0 ? 'Belum Ada Projek' : 'Projek Tidak Ditemukan'}
+                </h3>
                 <p className="text-muted-foreground mb-6">
-                  Coba ubah kata kunci pencarian atau pilih kategori yang berbeda.
+                  {projects.length === 0 
+                    ? 'Belum ada proyek yang tersedia saat ini. Silakan kembali lagi nanti.'
+                    : 'Coba ubah kata kunci pencarian atau pilih kategori yang berbeda.'
+                  }
                 </p>
-                <Button onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('semua');
-                }}>
-                  Reset Filter
-                </Button>
+                {projects.length > 0 && (
+                  <Button onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('semua');
+                  }}>
+                    Reset Filter
+                  </Button>
+                )}
               </div>
             </div>
           )}
 
           {/* Load More Button */}
-          {filteredProjects.length > 0 && (
+          {!isLoading && filteredProjects.length > 0 && (
             <div className="text-center mt-12">
-              <Button variant="outline" size="lg">
-                Muat Lebih Banyak Projek
+              <Button variant="outline" size="lg" disabled>
+                Semua Projek Ditampilkan
               </Button>
             </div>
           )}
