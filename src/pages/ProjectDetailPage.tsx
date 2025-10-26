@@ -1,243 +1,402 @@
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { projectsData } from '../data/projects';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import {
-  Users,
-  Calendar,
-  MapPin,
-  FileText,
-  Download,
-  BarChart,
-  Briefcase,
-  Award,
-  Share2,
-  CheckCircle
-} from 'lucide-react';
-import AnimateOnScroll from '../components/animations/AnimateOnScroll';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'; // Import Carousel
+import { AspectRatio } from "@/components/ui/aspect-ratio"; // Import AspectRatio
+// import { projectsData } from '@/data/projects'; // Hapus data dummy
+import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
+import { toast } from 'sonner';
+import { Clock, MapPin, Users, Target, CheckCircle, AlertCircle, Info } from 'lucide-react'; // Import icons
+
+// Import tipe data dari backend (sesuaikan jika perlu)
+type ProjectStatus = "Draft" | "Pendanaan" | "Aktif" | "Selesai" | "Dibatalkan";
+interface ApiProjectData {
+    id: number; title: string; slug: string; description: string | null; overview: string | null; target_amount: string; current_amount: string; backers: number; deadline: string | null; location: string | null; category: string | null; image_url: string | null; status: ProjectStatus;
+}
+interface ApiHighlight { id: number; title: string; description: string; }
+interface ApiReturnDetail { id: number; period: string; projection: string; }
+interface ApiGalleryItem { id: number; image_url: string; caption: string | null; }
+interface ApiResponseData { project: ApiProjectData; galleries: ApiGalleryItem[]; highlights: ApiHighlight[]; documents: any[]; returns: ApiReturnDetail[]; } // Dokumen diabaikan
+
+const formatCurrency = (amount: string | number | undefined) => {
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (numericAmount === undefined || isNaN(numericAmount)) {
+        return 'Rp -';
+    }
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(numericAmount);
+}
+
+const formatDate = (dateString: string | null): string => {
+    if (!dateString) return '-';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '-';
+        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (e) { return '-'; }
+};
+
+// Fungsi untuk menghitung sisa hari
+const calculateDaysLeft = (deadline: string | null): string => {
+    if (!deadline) return '- hari';
+    try {
+        const deadlineDate = new Date(deadline);
+        const today = new Date();
+        // Set waktu ke 00:00:00 untuk perbandingan tanggal saja
+        deadlineDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+
+        if (isNaN(deadlineDate.getTime())) return '- hari';
+
+        const diffTime = deadlineDate.getTime() - today.getTime();
+        if (diffTime < 0) return 'Berakhir'; // Jika sudah lewat
+
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return `${diffDays} hari lagi`;
+    } catch (e) {
+        return '- hari';
+    }
+};
+
+const getStatusBadgeVariant = (status: ProjectStatus | undefined) => {
+  switch (status) {
+    case 'Selesai': return 'bg-green-100 text-green-800 border-green-200';
+    case 'Pendanaan': return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'Aktif': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'Dibatalkan': return 'bg-red-100 text-red-800 border-red-200';
+    case 'Draft':
+    default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
 
 const ProjectDetailPage = () => {
-  const { projectId } = useParams();
-  const project = projectsData.find(p => p.id === projectId);
+    const { slug } = useParams<{ slug: string }>();
+    const [projectData, setProjectData] = useState<ApiResponseData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  if (!project) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-center">
-        <div>
-          <h1 className="text-4xl font-bold">404</h1>
-          <p className="text-xl text-muted-foreground">Proyek tidak ditemukan.</p>
-          <Button asChild className="mt-4">
-            <Link to="/projek">Kembali ke Daftar Proyek</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
+    useEffect(() => {
+        const fetchProjectDetail = async () => {
+            // *** PERBAIKAN: Pengecekan slug dan pesan error ***
+            if (!slug) {
+                console.error("Slug is missing from URL parameters."); // Tambah log
+                setError("Slug proyek tidak valid atau hilang dari URL."); // Pesan lebih jelas
+                setIsLoading(false);
+                return; // Hentikan eksekusi
+            }
 
-  const progressPercentage = (project.currentAmount / project.targetAmount) * 100;
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+            // Jika slug ada, lanjutkan
+            setIsLoading(true);
+            setError(null); // Reset error
+            try {
+                console.log(`Fetching project detail for slug: ${slug}`); // Log slug
+                const response = await fetch(`${API_BASE_URL}/api/projects/public/${slug}`);
+                console.log(`Fetch response status: ${response.status}`); // Log status
 
-  return (
-    <div className="min-h-screen bg-muted/30 pt-20">
-      <div className="container mx-auto px-4 lg:px-8 py-8">
-        {/* Breadcrumb and Title */}
-        <AnimateOnScroll>
-          <Breadcrumb className="mb-4">
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/">Beranda</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/projek">Projek</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{project.title}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          <h1 className="text-3xl lg:text-5xl font-bold mb-2">{project.title}</h1>
-          <div className="flex items-center space-x-4 text-muted-foreground mb-8">
-            <Badge variant="secondary" className="bg-accent-green text-accent-green-foreground">{project.category}</Badge>
-            <div className="flex items-center">
-              <MapPin size={16} className="mr-2" />
-              <span>{project.location}</span>
+                 if (response.status === 404) {
+                    throw new Error('Proyek tidak ditemukan atau belum dipublikasikan.');
+                }
+                 // Cek jika status bukan OK sebelum parsing JSON
+                 if (!response.ok) {
+                    // Coba baca pesan error jika ada, fallback jika tidak
+                    let errorMsg = `Gagal mengambil detail proyek (${response.status})`;
+                    try {
+                        const errData = await response.json();
+                        errorMsg = errData.message || errorMsg;
+                    } catch (e) { /* Abaikan jika parse gagal */ }
+                    throw new Error(errorMsg);
+                }
+
+                const data: ApiResponseData = await response.json();
+                 // Validasi data setelah fetch
+                 if (!data || !data.project) {
+                    console.error("Invalid data format received:", data);
+                    throw new Error("Format data proyek tidak sesuai dari server.");
+                 }
+                console.log("Project data received:", data); // Log data
+                setProjectData(data);
+            } catch (err: any) {
+                console.error("Error fetching project detail:", err);
+                setError(err.message);
+                toast.error(err.message); // Tampilkan toast juga
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchProjectDetail();
+    }, [slug, API_BASE_URL]); // Dependencies sudah benar
+
+    // Tampilkan Loading Skeleton
+    if (isLoading) {
+        return (
+            <div className="container mx-auto px-4 py-8 md:px-6 lg:py-12 animate-pulse">
+                <Skeleton className="h-4 w-1/3 mb-8" /> {/* Breadcrumb skeleton */}
+                <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+                    {/* Kolom Kiri Skeleton */}
+                    <div>
+                         <Skeleton className="w-full aspect-video rounded-lg mb-4" />
+                         <div className="flex gap-2 mb-6">
+                            <Skeleton className="w-16 h-16 rounded"/>
+                            <Skeleton className="w-16 h-16 rounded"/>
+                            <Skeleton className="w-16 h-16 rounded"/>
+                         </div>
+                         <Skeleton className="h-6 w-3/4 mb-2" />
+                         <Skeleton className="h-4 w-1/2 mb-4" />
+                         <Skeleton className="h-4 w-full mb-2" />
+                         <Skeleton className="h-4 w-full mb-2" />
+                         <Skeleton className="h-4 w-5/6 mb-6" />
+                         <Skeleton className="h-10 w-full rounded" />
+                    </div>
+                     {/* Kolom Kanan Skeleton */}
+                    <div className="space-y-6">
+                        <Skeleton className="h-8 w-1/4 mb-4"/>
+                        <Skeleton className="h-4 w-full mb-2"/>
+                        <Skeleton className="h-4 w-full mb-2"/>
+                        <Skeleton className="h-4 w-3/4 mb-4"/>
+                        <Skeleton className="h-2 w-full mb-2"/>
+                        <Skeleton className="h-4 w-1/2 mb-4"/>
+                        <div className="grid grid-cols-3 gap-4">
+                            <Skeleton className="h-16 w-full"/>
+                            <Skeleton className="h-16 w-full"/>
+                            <Skeleton className="h-16 w-full"/>
+                        </div>
+                         <Skeleton className="h-10 w-full rounded" />
+                    </div>
+                </div>
+                 {/* Detail Section Skeleton */}
+                 <div className="mt-12 space-y-8">
+                     <Skeleton className="h-8 w-1/3 mb-4"/>
+                     <Skeleton className="h-4 w-full mb-2"/>
+                     <Skeleton className="h-4 w-full mb-6"/>
+                     <Skeleton className="h-8 w-1/3 mb-4"/>
+                     <Skeleton className="h-4 w-full mb-2"/>
+                     <Skeleton className="h-4 w-full mb-6"/>
+                </div>
             </div>
-          </div>
-        </AnimateOnScroll>
+        );
+    }
 
-        <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
-          {/* Left Column */}
-          <div className="lg:col-span-2">
-            <AnimateOnScroll>
-              <Card className="mb-8 overflow-hidden">
-                <Carousel>
-                  <CarouselContent>
-                    {project.gallery.map((img, index) => (
-                       <CarouselItem key={index}>
-                         <img src={img} alt={`Galeri Proyek ${index + 1}`} className="w-full h-96 object-cover" />
-                       </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="left-4" />
-                  <CarouselNext className="right-4" />
-                </Carousel>
-              </Card>
-            </AnimateOnScroll>
+    // Tampilkan Error jika ada
+     if (error) {
+        return (
+            <div className="container mx-auto px-4 py-8 md:px-6 lg:py-12 text-center">
+                 <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+                <h1 className="text-2xl font-semibold text-destructive mb-2">Oops! Terjadi Kesalahan</h1>
+                <p className="text-muted-foreground mb-6">{error}</p>
+                 <Button asChild>
+                    <Link to="/proyek">Kembali ke Daftar Proyek</Link>
+                </Button>
+            </div>
+        );
+     }
 
-            <AnimateOnScroll delay={0.1}>
-              <Card className="mb-8">
-                <CardContent className="p-6">
-                  <div className="space-y-3 mb-6">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium text-primary">{Math.round(progressPercentage)}%</span>
-                    </div>
-                    <Progress value={progressPercentage} className="h-3" />
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-center">
-                    <div>
-                      <div className="font-bold text-2xl">{formatCurrency(project.currentAmount)}</div>
-                      <div className="text-sm text-muted-foreground">Terkumpul</div>
-                    </div>
-                    <div>
-                      <div className="font-bold text-2xl">{project.backers}</div>
-                      <div className="text-sm text-muted-foreground">Pendukung</div>
-                    </div>
-                    <div>
-                      <div className="font-bold text-2xl">{project.deadline}</div>
-                      <div className="text-sm text-muted-foreground">Sisa Waktu</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </AnimateOnScroll>
-            
-            <AnimateOnScroll delay={0.2}>
-              <Tabs defaultValue="overview">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="overview">Ringkasan</TabsTrigger>
-                  <TabsTrigger value="documents">Dokumen</TabsTrigger>
-                  <TabsTrigger value="returns">Imbal Hasil</TabsTrigger>
-                </TabsList>
-                <Card className="mt-4">
-                  <CardContent className="p-6">
-                    <TabsContent value="overview">
-                      <h3 className="text-xl font-semibold mb-4 flex items-center"><Briefcase size={20} className="mr-2 text-primary"/> Business Overview</h3>
-                      <p className="text-muted-foreground leading-relaxed mb-6">{project.overview}</p>
-                      <h3 className="text-xl font-semibold mb-4 flex items-center"><Award size={20} className="mr-2 text-primary"/> Company Highlight</h3>
-                      <ul className="space-y-3">
-                        {project.highlights.map((item, index) => (
-                           <li key={index} className="flex items-start">
-                             <CheckCircle size={16} className="mr-3 mt-1 text-green-500 flex-shrink-0" />
-                             <span className="text-muted-foreground"><strong>{item.title}:</strong> {item.description}</span>
-                           </li>
-                        ))}
-                      </ul>
-                    </TabsContent>
-                    <TabsContent value="documents">
-                      <h3 className="text-xl font-semibold mb-4 flex items-center"><FileText size={20} className="mr-2 text-primary"/> Dokumen Proyek</h3>
-                       <ul className="space-y-3">
-                        {project.documents.map((doc, index) => (
-                           <li key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                             <span className="font-medium">{doc.name}</span>
-                             <Button variant="outline" size="sm" asChild>
-                                <a href={doc.url} download><Download size={16} className="mr-2"/> Unduh</a>
-                             </Button>
-                           </li>
-                        ))}
-                      </ul>
-                    </TabsContent>
-                    <TabsContent value="returns">
-                       <h3 className="text-xl font-semibold mb-4 flex items-center"><BarChart size={20} className="mr-2 text-primary"/> Rincian Imbal Hasil</h3>
-                       <ul className="space-y-3">
-                        {project.returns.map((item, index) => (
-                           <li key={index} className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                             <span className="font-medium text-muted-foreground">{item.period}</span>
-                             <span className="font-semibold text-primary">{item.projection}</span>
-                           </li>
-                        ))}
-                      </ul>
-                    </TabsContent>
-                  </CardContent>
-                </Card>
-              </Tabs>
-            </AnimateOnScroll>
-          </div>
+    // Tampilkan jika data tidak ada setelah selesai loading & tidak ada error
+    if (!projectData) {
+        return (
+             <div className="container mx-auto px-4 py-8 md:px-6 lg:py-12 text-center">
+                 <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                 <h1 className="text-2xl font-semibold mb-2">Proyek Tidak Ditemukan</h1>
+                 <p className="text-muted-foreground mb-6">Proyek yang Anda cari mungkin tidak ada atau belum dipublikasikan.</p>
+                 <Button asChild>
+                    <Link to="/proyek">Kembali ke Daftar Proyek</Link>
+                </Button>
+             </div>
+        );
+    }
 
-          {/* Right Column */}
-          <div className="lg:col-span-1">
-            <AnimateOnScroll delay={0.3}>
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Dukung Proyek Ini</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <RadioGroup defaultValue="paket-2">
-                    <div className="flex items-center space-x-2 p-4 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                      <RadioGroupItem value="paket-1" id="paket-1" />
-                      <Label htmlFor="paket-1" className="flex-1 cursor-pointer">
-                        <div className="font-semibold">Paket Bronze</div>
-                        <div className="text-primary font-bold">{formatCurrency(100000)}</div>
-                      </Label>
+
+    const { project, galleries, highlights, returns } = projectData;
+    // Pengecekan tambahan sebelum menghitung progress
+    const targetAmountNum = parseFloat(project.target_amount);
+    const currentAmountNum = parseFloat(project.current_amount);
+    const progress = targetAmountNum > 0 ? (currentAmountNum / targetAmountNum) * 100 : 0;
+    const mainImageUrl = project.image_url ? `${API_BASE_URL}/${project.image_url}` : `https://placehold.co/600x400/e2e8f0/adb5bd?text=No+Image`;
+    const daysLeft = calculateDaysLeft(project.deadline);
+
+
+    return (
+        <div className="container mx-auto px-4 py-8 md:px-6 lg:py-12">
+            <Breadcrumb className="mb-8">
+              <BreadcrumbList>
+                <BreadcrumbItem> <BreadcrumbLink asChild> <Link to="/">Beranda</Link> </BreadcrumbLink> </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem> <BreadcrumbLink asChild> <Link to="/proyek">Proyek</Link> </BreadcrumbLink> </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem> <BreadcrumbPage>{project.title}</BreadcrumbPage> </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+
+            <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+                {/* Kolom Kiri: Gambar, Galeri, Deskripsi Singkat */}
+                <div>
+                    <AspectRatio ratio={16 / 9} className="bg-muted rounded-lg overflow-hidden mb-4">
+                        <img
+                             src={mainImageUrl}
+                             alt={project.title}
+                             className="object-cover w-full h-full"
+                             onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://placehold.co/600x400/f87171/ffffff?text=Error'; }}
+                         />
+                    </AspectRatio>
+
+                    {/* Galeri Carousel */}
+                    {galleries && galleries.length > 0 && (
+                        <Carousel className="w-full max-w-full mb-6" opts={{ loop: galleries.length > 1 }}> {/* Loop jika > 1 */}
+                             <CarouselContent className="-ml-2">
+                                {galleries.map((item, index) => (
+                                <CarouselItem key={item.id || index} className="pl-2 basis-1/3 md:basis-1/4">
+                                     <AspectRatio ratio={1 / 1} className="bg-muted rounded overflow-hidden">
+                                        <img
+                                             src={`${API_BASE_URL}/${item.image_url}`}
+                                             alt={item.caption || `Galeri ${index + 1}`}
+                                             className="object-cover w-full h-full"
+                                              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://placehold.co/100x100/f87171/ffffff?text=Err'; }}
+                                        />
+                                     </AspectRatio>
+                                </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            {/* Tampilkan navigasi jika item lebih banyak dari yg terlihat */}
+                            {galleries.length > 4 && ( // Asumsi basis-1/4 paling kecil
+                                <>
+                                    <CarouselPrevious className="absolute left-[-10px] top-1/2 -translate-y-1/2 z-10"/>
+                                    <CarouselNext className="absolute right-[-10px] top-1/2 -translate-y-1/2 z-10"/>
+                                </>
+                            )}
+                        </Carousel>
+                    )}
+
+                    <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground">{project.title}</h1>
+                    <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+                        <Badge variant="outline">{project.category || 'Lainnya'}</Badge>
+                        {project.location && (
+                            <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {project.location}</span>
+                        )}
                     </div>
-                     <div className="flex items-center space-x-2 p-4 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                      <RadioGroupItem value="paket-2" id="paket-2" />
-                      <Label htmlFor="paket-2" className="flex-1 cursor-pointer">
-                        <div className="font-semibold">Paket Silver</div>
-                        <div className="text-primary font-bold">{formatCurrency(500000)}</div>
-                      </Label>
-                    </div>
-                     <div className="flex items-center space-x-2 p-4 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                      <RadioGroupItem value="paket-3" id="paket-3" />
-                      <Label htmlFor="paket-3" className="flex-1 cursor-pointer">
-                        <div className="font-semibold">Paket Gold</div>
-                        <div className="text-primary font-bold">{formatCurrency(1000000)}</div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                  <div className="space-y-2">
-                     <Label htmlFor="custom-amount">Atau masukkan jumlah lain</Label>
-                     <Input id="custom-amount" type="number" placeholder="Contoh: 250000"/>
-                  </div>
-                  <Button size="lg" className="w-full font-semibold">Dukung Sekarang</Button>
-                  <Button variant="outline" className="w-full">
-                     <Share2 size={16} className="mr-2"/> Bagikan Proyek
-                  </Button>
-                </CardContent>
-              </Card>
-            </AnimateOnScroll>
-          </div>
+                     <p className="text-muted-foreground mb-6">{project.description || 'Tidak ada deskripsi singkat.'}</p>
+                     {/* Tombol Investasi / Status */}
+                      {project.status === 'Pendanaan' && (
+                        <Button size="lg" className="w-full">
+                            Investasi Sekarang
+                        </Button>
+                      )}
+                       {project.status !== 'Pendanaan' && (
+                         <div className={`flex items-center justify-center gap-2 p-3 rounded-md text-sm font-medium ${getStatusBadgeVariant(project.status)}`}>
+                             {project.status === 'Aktif' && <Info className="w-4 h-4"/>}
+                             {project.status === 'Selesai' && <CheckCircle className="w-4 h-4"/>}
+                             {project.status === 'Dibatalkan' && <AlertCircle className="w-4 h-4"/>}
+                             Status: {project.status}
+                         </div>
+                      )}
+
+                </div>
+
+                 {/* Kolom Kanan: Detail Pendanaan, Info Penting */}
+                <div className="space-y-6">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Ringkasan Pendanaan</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             {/* Pastikan progress tidak melebihi 100 */}
+                            <Progress value={Math.min(progress, 100)} className="h-3" aria-label={`${Math.round(progress)}% terkumpul`}/>
+                            <div className="flex justify-between items-baseline">
+                                <span className="text-2xl font-bold text-primary">{formatCurrency(project.current_amount)}</span>
+                                <span className="text-sm text-muted-foreground">Terkumpul dari {formatCurrency(project.target_amount)}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div className="font-semibold text-lg">{project.backers}</div>
+                                    <div className="text-xs text-muted-foreground">Pendukung</div>
+                                </div>
+                                 <div>
+                                     {/* Pastikan progress tidak melebihi 100 */}
+                                    <div className="font-semibold text-lg">{Math.min(Math.round(progress), 100)}%</div>
+                                    <div className="text-xs text-muted-foreground">Tercapai</div>
+                                </div>
+                                <div>
+                                     <div className="font-semibold text-lg flex items-center justify-center gap-1">
+                                         <Clock className="w-4 h-4"/> {daysLeft}
+                                     </div>
+                                    <div className="text-xs text-muted-foreground">Sisa Waktu</div>
+                                </div>
+                            </div>
+                        </CardContent>
+                     </Card>
+
+                    {/* Poin Unggulan */}
+                    {highlights && highlights.length > 0 && (
+                        <Card>
+                            <CardHeader> <CardTitle>Poin Unggulan</CardTitle> </CardHeader>
+                            <CardContent className="space-y-3">
+                                {highlights.map((item) => (
+                                    <div key={item.id}>
+                                        <h4 className="font-semibold text-foreground">{item.title}</h4>
+                                        <p className="text-sm text-muted-foreground">{item.description}</p>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Imbal Hasil */}
+                    {returns && returns.length > 0 && (
+                        <Card>
+                            <CardHeader> <CardTitle>Proyeksi Imbal Hasil</CardTitle> </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Periode</TableHead>
+                                            <TableHead>Proyeksi</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {returns.map((item) => (
+                                            <TableRow key={item.id}>
+                                                <TableCell>{item.period}</TableCell>
+                                                <TableCell>{item.projection}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                     )}
+                </div>
+            </div>
+
+            {/* Detail Section: Overview */}
+            <div className="mt-12 lg:mt-16 space-y-8">
+                 <Card>
+                    <CardHeader> <CardTitle>Tentang Proyek</CardTitle> </CardHeader>
+                     <CardContent className="prose prose-sm sm:prose-base max-w-none text-muted-foreground dark:prose-invert">
+                        {/* Render overview - Ganti <p> dengan <div> jika overview mungkin mengandung paragraf */}
+                         <div className="whitespace-pre-wrap">{project.overview || 'Tidak ada ringkasan detail.'}</div>
+                    </CardContent>
+                 </Card>
+
+                 {/* TODO: Bagian Dokumen (jika perlu ditampilkan publik) */}
+                 {/* TODO: Bagian Update Proyek */}
+                 {/* TODO: Bagian Tanya Jawab / Diskusi */}
+
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default ProjectDetailPage;
+
