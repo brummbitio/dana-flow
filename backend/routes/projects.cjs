@@ -59,6 +59,54 @@ const projectUploadMiddleware = upload.fields([
 ]);
 // --- Akhir Konfigurasi Multer ---
 
+// === GET /api/projects/public - Mengambil Daftar Proyek Publik ===
+router.get('/public', async (req, res) => {
+  const { limit } = req.query;
+  try {
+    let query = 'SELECT id, title, slug, description, category, target_amount, current_amount, backers, deadline, status, image_url, location FROM projects WHERE status = ? OR status = ? ORDER BY created_at DESC';
+    const queryParams = ['Pendanaan', 'Aktif'];
+
+    if (limit && !isNaN(parseInt(limit))) {
+      query += ' LIMIT ?';
+      queryParams.push(parseInt(limit));
+    }
+
+    const [projects] = await db.query(query, queryParams);
+    res.json(projects);
+  } catch (error) {
+    console.error('Error fetching public projects:', error);
+    res.status(500).json({ message: 'Gagal mengambil daftar proyek.' });
+  }
+});
+
+// === GET /api/projects/public/:slug - Mengambil Detail Proyek Publik ===
+router.get('/public/:slug', async (req, res) => {
+  const { slug } = req.params;
+  try {
+    const [projects] = await db.query('SELECT * FROM projects WHERE slug = ? AND (status = ? OR status = ?)', [slug, 'Pendanaan', 'Aktif']);
+
+    if (projects.length === 0) {
+      return res.status(404).json({ message: 'Proyek tidak ditemukan.' });
+    }
+
+    const project = projects[0];
+
+    // Ambil data terkait (kecuali documents untuk publik)
+    const [galleries] = await db.query('SELECT id, image_url, caption FROM project_galleries WHERE project_id = ?', [project.id]);
+    const [highlights] = await db.query('SELECT id, title, description FROM project_highlights WHERE project_id = ?', [project.id]);
+    const [returns] = await db.query('SELECT id, period, projection FROM project_returns WHERE project_id = ?', [project.id]);
+
+    res.json({
+      project,
+      galleries,
+      highlights,
+      returns
+    });
+  } catch (error) {
+    console.error(`Error fetching public project detail for slug ${slug}:`, error);
+    res.status(500).json({ message: 'Gagal mengambil detail proyek.' });
+  }
+});
 
 // === GET /api/projects - Mengambil Daftar Proyek ===
 router.get('/', adminAuth, async (req, res) => {
@@ -378,4 +426,3 @@ router.delete('/:id', adminAuth, async (req, res) => {
 });
 
 module.exports = router;
-
