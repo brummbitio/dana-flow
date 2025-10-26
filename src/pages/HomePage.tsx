@@ -1,12 +1,15 @@
 import { motion } from 'framer-motion';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { Skeleton } from '../components/ui/skeleton';
 import AnimateOnScroll from '../components/animations/AnimateOnScroll';
 import StaggerContainer, { StaggerChild } from '../components/animations/StaggerContainer';
 import ProjectCard from '../components/ProjectCard';
 import ArticleCard from '../components/ArticleCard';
-import { projectsData } from '../data/projects';
-import { articlesData } from '../data/articles'; // Import data artikel
+import { articlesData } from '../data/articles';
+import { ProjectData } from '../types/project';
+import { useState, useEffect } from 'react';
+import { useToast } from '../hooks/use-toast';
 import { 
   TrendingUp, 
   Users, 
@@ -19,8 +22,36 @@ import {
 } from 'lucide-react';
 
 const HomePage = () => {
-  const featuredProjects = projectsData.slice(0, 3);
-  const latestArticles = articlesData.slice(0, 3); // Gunakan data artikel terpusat
+  const [projects, setProjects] = useState<ProjectData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/projects/public?limit=4`);
+        if (!response.ok) {
+          throw new Error('Gagal mengambil data proyek');
+        }
+        const data = await response.json();
+        setProjects(data);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        toast({
+          title: 'Error',
+          description: 'Gagal memuat data proyek. Silakan coba lagi.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [API_BASE_URL, toast]);
+
+  const latestArticles = articlesData.slice(0, 3);
 
   const stats = [
     { label: "Total Pendanaan", value: "Rp 2.5B", icon: TrendingUp },
@@ -46,6 +77,41 @@ const HomePage = () => {
       description: "Bergabung dengan ribuan anggota koperasi dari seluruh Indonesia"
     }
   ];
+
+  const renderProjectCards = () => {
+    if (isLoading) {
+      return (
+        <>
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="space-y-4">
+              <Skeleton className="h-48 w-full rounded-xl" />
+              <div className="space-y-2 p-4">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            </div>
+          ))}
+        </>
+      );
+    }
+
+    if (projects.length === 0) {
+      return (
+        <div className="col-span-full text-center py-12">
+          <p className="text-muted-foreground text-lg">
+            Belum ada proyek yang tersedia saat ini.
+          </p>
+        </div>
+      );
+    }
+
+    return projects.slice(0, 3).map((project) => (
+      <StaggerChild key={project.id}>
+        <ProjectCard project={project} />
+      </StaggerChild>
+    ));
+  };
 
   return (
     <div className="min-h-screen">
@@ -154,11 +220,7 @@ const HomePage = () => {
             </div>
             
             <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredProjects.map((project) => (
-                <StaggerChild key={project.id}>
-                  <ProjectCard {...project} />
-                </StaggerChild>
-              ))}
+              {renderProjectCards()}
             </StaggerContainer>
 
             <div className="text-center mt-12">
