@@ -5,8 +5,8 @@ interface User {
   id: number;
   fullName: string;
   email: string;
-  role: 'user' | 'admin'; // Menambahkan peran
-  status?: 'unverified' | 'pending' | 'verified'; // Menambahkan status verifikasi (opsional)
+  role: 'user' | 'admin';
+  status: 'unverified' | 'pending' | 'verified' | 'rejected';
 }
 
 // Tipe data untuk konteks
@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (token: string, userData: User) => void;
   logout: () => void;
   isLoading: boolean;
+  updateUserStatus: (newStatus: User['status']) => void; // Fungsi baru
 }
 
 // Membuat konteks
@@ -62,11 +63,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(null);
     setUser(null);
   };
+  
+  // Fungsi untuk memperbarui status pengguna di state dan local storage
+  const updateUserStatus = (newStatus: User['status']) => {
+    if (user) {
+        const updatedUser = { ...user, status: newStatus };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
 
   const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, isLoading, updateUserStatus }}>
       {children}
     </AuthContext.Provider>
   );
@@ -80,4 +90,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
