@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   SidebarHeader,
   SidebarBody,
@@ -19,6 +19,12 @@ interface SidebarContentProps {
 const SidebarContent: React.FC<SidebarContentProps> = ({ onLinkClick }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+  logout(); // Hapus token, data user, dsb
+  navigate('/'); // Arahkan ke halaman utama
+  };
 
   const isVerified = user?.status === 'verified';
 
@@ -85,7 +91,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ onLinkClick }) => {
               <p className="text-sm font-medium truncate">{user?.fullName}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
-            <button onClick={logout} className="text-muted-foreground hover:text-foreground">
+            <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
               <LogOut className="w-5 h-5" />
             </button>
           </div>

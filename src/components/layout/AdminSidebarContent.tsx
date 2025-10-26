@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate} from 'react-router-dom';
 import { SidebarBody, SidebarFooter, SidebarHeader, SidebarNav, SidebarNavLink, SidebarNavMain } from '@/components/ui/sidebar-new';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -7,6 +7,12 @@ import { LayoutDashboard, Users, Briefcase, Banknote, Settings, LogOut } from 'l
 const AdminSidebarContent = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+  logout(); // Hapus token, data user, dsb
+  navigate('/'); // Arahkan ke halaman utama
+  };
 
   const getInitials = (name: string) => {
     if (!name) return '';
@@ -55,7 +61,7 @@ const AdminSidebarContent = () => {
         </SidebarNav>
       </SidebarBody>
 
-      <SidebarFooter>
+      <SidebarFooter >
         <SidebarNav>
           <SidebarNavMain>
             <SidebarNavLink to="/admin/settings" active={isActive('/admin/settings')}>
@@ -75,7 +81,7 @@ const AdminSidebarContent = () => {
               <p className="text-sm font-medium truncate">{user?.fullName}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
-            <button onClick={logout} className="text-muted-foreground hover:text-foreground">
+            <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
               <LogOut className="w-5 h-5" />
             </button>
           </div>
